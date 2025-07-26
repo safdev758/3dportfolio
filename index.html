@@ -1,0 +1,202 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>3D Virtual Workspace - Developer Portfolio</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: #0a0a0a;
+            overflow: hidden;
+            color: white;
+            margin: 0;
+            padding: 0;
+            width: 100vw;
+            height: 100vh;
+        }
+        
+        #canvas-container {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100vw;
+            height: 100vh;
+            z-index: 1;
+            margin: 0;
+            padding: 0;
+        }
+        
+        #canvas-container canvas {
+            display: block;
+            width: 100% !important;
+            height: 100% !important;
+        }
+        
+        #loading {
+            position: fixed;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            z-index: 100;
+            text-align: center;
+            background: rgba(0, 0, 0, 0.9);
+            padding: 40px;
+            border-radius: 20px;
+            border: 2px solid rgba(0, 255, 255, 0.5);
+            backdrop-filter: blur(20px);
+        }
+        
+        #loading h2 {
+            color: #00ffff;
+            margin-bottom: 20px;
+            font-size: 28px;
+            text-shadow: 0 0 10px #00ffff;
+        }
+        
+        .loading-bar {
+            width: 300px;
+            height: 6px;
+            background: rgba(255, 255, 255, 0.1);
+            border-radius: 3px;
+            overflow: hidden;
+            margin: 20px auto;
+        }
+        
+        .loading-progress {
+            height: 100%;
+            background: linear-gradient(90deg, #00ffff, #ff00ff, #ffff00);
+            width: 0%;
+            transition: width 0.3s ease;
+            animation: pulse 2s infinite;
+        }
+        
+        @keyframes pulse {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.7; }
+        }
+        
+        #ui-overlay {
+            position: fixed;
+            top: 20px;
+            left: 20px;
+            z-index: 10;
+            pointer-events: none;
+        }
+        
+        .info-panel {
+            background: rgba(0, 0, 0, 0.8);
+            padding: 20px;
+            border-radius: 15px;
+            border: 2px solid rgba(0, 255, 255, 0.4);
+            margin-bottom: 15px;
+            backdrop-filter: blur(15px);
+            box-shadow: 0 0 20px rgba(0, 255, 255, 0.2);
+        }
+        
+        .info-panel h3 {
+            color: #00ffff;
+            margin-bottom: 10px;
+            font-size: 18px;
+            text-shadow: 0 0 5px #00ffff;
+        }
+        
+        .info-panel p {
+            font-size: 14px;
+            color: rgba(255, 255, 255, 0.9);
+            line-height: 1.5;
+        }
+        
+        #controls {
+            position: fixed;
+            bottom: 20px;
+            right: 20px;
+            z-index: 10;
+            display: flex;
+            flex-direction: column;
+            gap: 15px;
+        }
+        
+        .control-btn {
+            background: rgba(0, 255, 255, 0.15);
+            border: 2px solid rgba(0, 255, 255, 0.4);
+            color: #00ffff;
+            padding: 15px 20px;
+            border-radius: 12px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            backdrop-filter: blur(15px);
+            font-size: 16px;
+            min-width: 180px;
+            text-shadow: 0 0 5px #00ffff;
+            box-shadow: 0 0 15px rgba(0, 255, 255, 0.1);
+        }
+        
+        .control-btn:hover {
+            background: rgba(0, 255, 255, 0.25);
+            box-shadow: 0 0 25px rgba(0, 255, 255, 0.4);
+            transform: translateY(-2px);
+        }
+        
+        .control-btn.active {
+            background: rgba(0, 255, 255, 0.35);
+            box-shadow: 0 0 30px rgba(0, 255, 255, 0.6);
+        }
+        
+        /* Holographic effects */
+        .holographic {
+            position: relative;
+            overflow: hidden;
+        }
+        
+        .holographic::before {
+            content: '';
+            position: absolute;
+            top: -50%;
+            left: -50%;
+            width: 200%;
+            height: 200%;
+            background: linear-gradient(45deg, transparent, rgba(0, 255, 255, 0.1), transparent);
+            animation: holographicScan 3s infinite;
+        }
+        
+        @keyframes holographicScan {
+            0% { transform: translateX(-100%) translateY(-100%) rotate(45deg); }
+            100% { transform: translateX(100%) translateY(100%) rotate(45deg); }
+        }
+    </style>
+</head>
+<body>
+    <div id="loading" class="holographic">
+        <h2>🚀 Initializing Matrix Workspace...</h2>
+        <div class="loading-bar">
+            <div class="loading-progress" id="progress"></div>
+        </div>
+        <p style="color: #00ff00; margin-top: 15px;">Loading quantum field, neural networks, and matrix rain...</p>
+    </div>
+    
+    <div id="canvas-container"></div>
+    
+    <div id="ui-overlay">
+        <div class="info-panel holographic">
+            <h3>👨‍💻 Khentit Safouane Amine</h3>
+            <p>Full Stack Developer<br>ESI Sidi-Bel-Abbès<br>20 years old</p>
+        </div>
+    </div>
+    
+    <div id="controls">
+        <button class="control-btn" onclick="resetCamera()">🎯 Reset View</button>
+        <button class="control-btn" onclick="viewProjects()">📁 View Projects</button>
+        <button class="control-btn" onclick="viewSkills()">⚡ View Skills</button>
+        <button class="control-btn" onclick="toggleAnimation()">⏯️ Toggle Animation</button>
+    </div>
+    
+    <script type="module" src="./main.js"></script>
+</body>
+</html>
