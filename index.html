@@ -2,13 +2,14 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
     <title>3D Virtual Workspace - Developer Portfolio</title>
     <style>
         * {
             margin: 0;
             padding: 0;
             box-sizing: border-box;
+            -webkit-tap-highlight-color: transparent;
         }
         
         body {
@@ -20,6 +21,7 @@
             padding: 0;
             width: 100vw;
             height: 100vh;
+            touch-action: none;
         }
         
         #canvas-container {
@@ -47,26 +49,27 @@
             z-index: 100;
             text-align: center;
             background: rgba(0, 0, 0, 0.9);
-            padding: 40px;
-            border-radius: 20px;
+            padding: clamp(20px, 5vw, 40px);
+            border-radius: clamp(10px, 3vw, 20px);
             border: 2px solid rgba(0, 255, 255, 0.5);
             backdrop-filter: blur(20px);
+            max-width: 90vw;
         }
         
         #loading h2 {
             color: #00ffff;
-            margin-bottom: 20px;
-            font-size: 28px;
+            margin-bottom: clamp(10px, 3vw, 20px);
+            font-size: clamp(18px, 5vw, 28px);
             text-shadow: 0 0 10px #00ffff;
         }
         
         .loading-bar {
-            width: 300px;
+            width: clamp(200px, 60vw, 300px);
             height: 6px;
             background: rgba(255, 255, 255, 0.1);
             border-radius: 3px;
             overflow: hidden;
-            margin: 20px auto;
+            margin: clamp(10px, 3vw, 20px) auto;
         }
         
         .loading-progress {
@@ -84,61 +87,67 @@
         
         #ui-overlay {
             position: fixed;
-            top: 20px;
-            left: 20px;
+            top: clamp(10px, 2vw, 20px);
+            left: clamp(10px, 2vw, 20px);
             z-index: 10;
             pointer-events: none;
+            max-width: calc(100vw - 40px);
         }
         
         .info-panel {
             background: rgba(0, 0, 0, 0.8);
-            padding: 20px;
-            border-radius: 15px;
+            padding: clamp(10px, 3vw, 20px);
+            border-radius: clamp(8px, 2vw, 15px);
             border: 2px solid rgba(0, 255, 255, 0.4);
-            margin-bottom: 15px;
+            margin-bottom: clamp(8px, 2vw, 15px);
             backdrop-filter: blur(15px);
             box-shadow: 0 0 20px rgba(0, 255, 255, 0.2);
         }
         
         .info-panel h3 {
             color: #00ffff;
-            margin-bottom: 10px;
-            font-size: 18px;
+            margin-bottom: clamp(5px, 1.5vw, 10px);
+            font-size: clamp(14px, 3.5vw, 18px);
             text-shadow: 0 0 5px #00ffff;
         }
         
         .info-panel p {
-            font-size: 14px;
+            font-size: clamp(11px, 2.5vw, 14px);
             color: rgba(255, 255, 255, 0.9);
             line-height: 1.5;
         }
         
         #controls {
             position: fixed;
-            bottom: 20px;
-            right: 20px;
+            bottom: clamp(10px, 2vw, 20px);
+            right: clamp(10px, 2vw, 20px);
             z-index: 10;
             display: flex;
             flex-direction: column;
-            gap: 15px;
+            gap: clamp(8px, 2vw, 15px);
+            max-width: calc(50vw);
         }
         
         .control-btn {
             background: rgba(0, 255, 255, 0.15);
             border: 2px solid rgba(0, 255, 255, 0.4);
             color: #00ffff;
-            padding: 15px 20px;
-            border-radius: 12px;
+            padding: clamp(8px, 2vw, 15px) clamp(10px, 3vw, 20px);
+            border-radius: clamp(6px, 1.5vw, 12px);
             cursor: pointer;
             transition: all 0.3s ease;
             backdrop-filter: blur(15px);
-            font-size: 16px;
-            min-width: 180px;
+            font-size: clamp(11px, 2.5vw, 16px);
+            min-width: clamp(120px, 30vw, 180px);
             text-shadow: 0 0 5px #00ffff;
             box-shadow: 0 0 15px rgba(0, 255, 255, 0.1);
+            text-align: center;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
         }
         
-        .control-btn:hover {
+        .control-btn:hover, .control-btn:active {
             background: rgba(0, 255, 255, 0.25);
             box-shadow: 0 0 25px rgba(0, 255, 255, 0.4);
             transform: translateY(-2px);
@@ -149,7 +158,78 @@
             box-shadow: 0 0 30px rgba(0, 255, 255, 0.6);
         }
         
-        /* Holographic effects */
+        /* Mobile-specific touch controls */
+        #touch-controls {
+            position: fixed;
+            bottom: clamp(10px, 2vw, 20px);
+            left: clamp(10px, 2vw, 20px);
+            z-index: 10;
+            display: flex;
+            gap: clamp(5px, 1vw, 10px);
+        }
+        
+        .touch-btn {
+            background: rgba(255, 255, 255, 0.1);
+            border: 1px solid rgba(255, 255, 255, 0.3);
+            color: white;
+            padding: clamp(8px, 2vw, 12px);
+            border-radius: 50%;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            backdrop-filter: blur(10px);
+            font-size: clamp(16px, 4vw, 20px);
+            width: clamp(40px, 10vw, 50px);
+            height: clamp(40px, 10vw, 50px);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            touch-action: manipulation;
+        }
+        
+        .touch-btn:active {
+            background: rgba(255, 255, 255, 0.2);
+            transform: scale(0.95);
+        }
+        
+        /* Navigation overlay for mobile */
+        .nav-overlay {
+            position: fixed;
+            bottom: clamp(60px, 15vw, 100px);
+            left: 50%;
+            transform: translateX(-50%);
+            z-index: 20;
+            display: flex;
+            gap: clamp(10px, 3vw, 20px);
+            background: rgba(0,0,0,0.8);
+            padding: clamp(8px, 2vw, 15px);
+            border-radius: clamp(5px, 1.5vw, 10px);
+            border: 1px solid rgba(0,255,255,0.3);
+            backdrop-filter: blur(10px);
+        }
+        
+        .nav-btn {
+            background: rgba(0,255,255,0.2);
+            border: 1px solid #00ffff;
+            color: #00ffff;
+            padding: clamp(6px, 1.5vw, 10px) clamp(8px, 2vw, 15px);
+            border-radius: clamp(3px, 1vw, 5px);
+            cursor: pointer;
+            font-size: clamp(10px, 2.5vw, 14px);
+            touch-action: manipulation;
+            white-space: nowrap;
+        }
+        
+        .nav-btn:active {
+            background: rgba(0,255,255,0.4);
+        }
+        
+        .nav-btn.close {
+            background: rgba(255,0,0,0.2);
+            border-color: #ff4444;
+            color: #ff4444;
+        }
+        
+        /* Holographic effects - optimized for mobile */
         .holographic {
             position: relative;
             overflow: hidden;
@@ -170,6 +250,77 @@
             0% { transform: translateX(-100%) translateY(-100%) rotate(45deg); }
             100% { transform: translateX(100%) translateY(100%) rotate(45deg); }
         }
+        
+        /* Performance optimizations for mobile */
+        @media (max-width: 768px) {
+            .holographic::before {
+                animation-duration: 4s; /* Slower animation for better performance */
+            }
+            
+            #controls {
+                flex-direction: row;
+                flex-wrap: wrap;
+                bottom: clamp(60px, 12vw, 80px);
+                right: 50%;
+                transform: translateX(50%);
+                justify-content: center;
+                max-width: 90vw;
+            }
+            
+            .control-btn {
+                flex: 1;
+                min-width: clamp(80px, 20vw, 120px);
+                font-size: clamp(9px, 2vw, 12px);
+                padding: clamp(6px, 1.5vw, 10px);
+            }
+        }
+        
+        /* Very small screens */
+        @media (max-width: 480px) {
+            .info-panel {
+                padding: clamp(8px, 2vw, 12px);
+            }
+            
+            .control-btn {
+                min-width: clamp(70px, 18vw, 100px);
+                font-size: clamp(8px, 1.8vw, 11px);
+            }
+            
+            #touch-controls {
+                gap: clamp(3px, 0.5vw, 5px);
+            }
+            
+            .touch-btn {
+                width: clamp(35px, 8vw, 45px);
+                height: clamp(35px, 8vw, 45px);
+                font-size: clamp(14px, 3.5vw, 18px);
+            }
+        }
+        
+        /* Landscape mobile orientation */
+        @media (max-height: 500px) and (orientation: landscape) {
+            #ui-overlay {
+                top: clamp(5px, 1vw, 10px);
+                left: clamp(5px, 1vw, 10px);
+            }
+            
+            #controls {
+                bottom: clamp(5px, 1vw, 10px);
+                right: clamp(5px, 1vw, 10px);
+                flex-direction: row;
+                max-width: 60vw;
+            }
+            
+            #touch-controls {
+                bottom: clamp(5px, 1vw, 10px);
+                left: clamp(5px, 1vw, 10px);
+            }
+            
+            .info-panel {
+                padding: clamp(5px, 1.5vw, 10px);
+                margin-bottom: clamp(5px, 1vw, 8px);
+            }
+        }
     </style>
 </head>
 <body>
@@ -178,7 +329,7 @@
         <div class="loading-bar">
             <div class="loading-progress" id="progress"></div>
         </div>
-        <p style="color: #00ff00; margin-top: 15px;">Loading quantum field, neural networks, and matrix rain...</p>
+        <p style="color: #00ff00; margin-top: clamp(8px, 2vw, 15px); font-size: clamp(10px, 2.5vw, 14px);">Loading quantum field, neural networks, and matrix rain...</p>
     </div>
     
     <div id="canvas-container"></div>
@@ -190,11 +341,17 @@
         </div>
     </div>
     
+    <div id="touch-controls">
+        <button class="touch-btn" id="zoom-in" title="Zoom In">+</button>
+        <button class="touch-btn" id="zoom-out" title="Zoom Out">-</button>
+        <button class="touch-btn" id="reset-view" title="Reset View">⌂</button>
+    </div>
+    
     <div id="controls">
-        <button class="control-btn" onclick="resetCamera()">🎯 Reset View</button>
-        <button class="control-btn" onclick="viewProjects()">📁 View Projects</button>
-        <button class="control-btn" onclick="viewSkills()">⚡ View Skills</button>
-        <button class="control-btn" onclick="toggleAnimation()">⏯️ Toggle Animation</button>
+        <button class="control-btn" onclick="resetCamera()">🎯 Reset</button>
+        <button class="control-btn" onclick="viewProjects()">📁 Projects</button>
+        <button class="control-btn" onclick="viewSkills()">⚡ Skills</button>
+        <button class="control-btn" onclick="toggleAnimation()">⏯️ Animate</button>
     </div>
     
     <script type="module" src="./main.js"></script>
