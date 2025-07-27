@@ -36,6 +36,14 @@ let rotationX = 0,
   rotationY = 0
 let currentDistance = 8
 
+// Mobile touch variables
+const isMobile = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent)
+let touchStartX = 0,
+  touchStartY = 0
+let touchStartDistance = 0
+let lastTouchTime = 0
+const touchSensitivity = isMobile ? 0.003 : 0.005
+
 // Khentit Safouane Amine's Real Projects
 const projectsData = [
   {
@@ -135,6 +143,9 @@ function init() {
   createEnergyBeams()
   createPortalEffects()
 
+  // Initialize mobile controls
+  initializeMobileControls()
+
   // Start animation loop
   clock = new THREE.Clock()
   animate()
@@ -166,6 +177,7 @@ function addOrbitControls() {
   let mouseX = 0,
     mouseY = 0
 
+  // Mouse controls for desktop
   renderer.domElement.addEventListener("mousedown", (event) => {
     isMouseDown = true
     mouseX = event.clientX
@@ -178,8 +190,8 @@ function addOrbitControls() {
       const deltaX = event.clientX - mouseX
       const deltaY = event.clientY - mouseY
 
-      targetRotationY += deltaX * 0.005
-      targetRotationX += deltaY * 0.005
+      targetRotationY += deltaX * touchSensitivity
+      targetRotationX += deltaY * touchSensitivity
 
       targetRotationX = Math.max(-Math.PI / 3, Math.min(Math.PI / 3, targetRotationX))
 
@@ -202,6 +214,81 @@ function addOrbitControls() {
     currentDistance = Math.max(3, Math.min(15, currentDistance))
   })
 
+  // Touch controls for mobile
+  let touches = []
+
+  renderer.domElement.addEventListener(
+    "touchstart",
+    (event) => {
+      event.preventDefault()
+      touches = Array.from(event.touches)
+
+      if (touches.length === 1) {
+        // Single touch - rotation
+        touchStartX = touches[0].clientX
+        touchStartY = touches[0].clientY
+        showTouchFeedback(touches[0].clientX, touches[0].clientY)
+      } else if (touches.length === 2) {
+        // Two finger touch - zoom
+        const dx = touches[0].clientX - touches[1].clientX
+        const dy = touches[0].clientY - touches[1].clientY
+        touchStartDistance = Math.sqrt(dx * dx + dy * dy)
+      }
+
+      lastTouchTime = Date.now()
+    },
+    { passive: false },
+  )
+
+  renderer.domElement.addEventListener(
+    "touchmove",
+    (event) => {
+      event.preventDefault()
+      touches = Array.from(event.touches)
+
+      if (touches.length === 1) {
+        // Single touch rotation
+        const deltaX = touches[0].clientX - touchStartX
+        const deltaY = touches[0].clientY - touchStartY
+
+        targetRotationY += deltaX * touchSensitivity
+        targetRotationX += deltaY * touchSensitivity
+
+        targetRotationX = Math.max(-Math.PI / 3, Math.min(Math.PI / 3, targetRotationX))
+
+        touchStartX = touches[0].clientX
+        touchStartY = touches[0].clientY
+      } else if (touches.length === 2) {
+        // Two finger zoom
+        const dx = touches[0].clientX - touches[1].clientX
+        const dy = touches[0].clientY - touches[1].clientY
+        const distance = Math.sqrt(dx * dx + dy * dy)
+
+        if (touchStartDistance > 0) {
+          const scale = distance / touchStartDistance
+          const newDistance = currentDistance / scale
+          currentDistance = Math.max(3, Math.min(15, newDistance))
+          touchStartDistance = distance
+        }
+      }
+    },
+    { passive: false },
+  )
+
+  renderer.domElement.addEventListener(
+    "touchend",
+    (event) => {
+      event.preventDefault()
+      touches = Array.from(event.touches)
+
+      // Reset touch distance when lifting fingers
+      if (touches.length < 2) {
+        touchStartDistance = 0
+      }
+    },
+    { passive: false },
+  )
+
   renderer.domElement.style.cursor = "grab"
 
   function updateCamera() {
@@ -216,6 +303,54 @@ function addOrbitControls() {
     requestAnimationFrame(updateCamera)
   }
   updateCamera()
+}
+
+function initializeMobileControls() {
+  // Zoom in button
+  document.getElementById("zoom-in").addEventListener("click", () => {
+    currentDistance = Math.max(3, currentDistance - 1)
+  })
+
+  // Zoom out button
+  document.getElementById("zoom-out").addEventListener("click", () => {
+    currentDistance = Math.min(15, currentDistance + 1)
+  })
+
+  // Reset view button
+  document.getElementById("reset-view").addEventListener("click", () => {
+    resetCamera()
+  })
+
+  // Add touch feedback for all buttons
+  const allButtons = document.querySelectorAll(".control-btn, .touch-btn, .nav-btn")
+  allButtons.forEach((button) => {
+    button.addEventListener("touchstart", (e) => {
+      e.preventDefault()
+      button.style.transform = "scale(0.95)"
+      showTouchFeedback(e.touches[0].clientX, e.touches[0].clientY)
+    })
+
+    button.addEventListener("touchend", (e) => {
+      e.preventDefault()
+      button.style.transform = "scale(1)"
+      // Trigger click after a short delay
+      setTimeout(() => {
+        button.click()
+      }, 50)
+    })
+  })
+}
+
+function showTouchFeedback(x, y) {
+  const feedback = document.createElement("div")
+  feedback.className = "touch-feedback"
+  feedback.style.left = x + "px"
+  feedback.style.top = y + "px"
+  document.body.appendChild(feedback)
+
+  setTimeout(() => {
+    document.body.removeChild(feedback)
+  }, 600)
 }
 
 function createRealisticRoom() {
@@ -276,11 +411,11 @@ function createRealisticRoom() {
     for (let col = 0; col < 64; col++) {
       const x = col * 16
       let currentOpacity = Math.random() * 0.3 + 0.5 // Higher base opacity
-      
+
       for (let row = 0; row < 64; row++) {
         const y = row * 16 + 16
         const char = characters[Math.floor(Math.random() * characters.length)]
-        
+
         // Create more visible fading effect
         const fadePosition = Math.random() * 15 + 5
         if (row > fadePosition) {
@@ -288,7 +423,7 @@ function createRealisticRoom() {
         } else {
           currentOpacity = 0.7 + Math.random() * 0.3 // Brighter characters
         }
-        
+
         // Leading character is much brighter
         if (row === Math.floor(fadePosition)) {
           wallCtx.fillStyle = "#ffffff"
@@ -299,7 +434,7 @@ function createRealisticRoom() {
           wallCtx.shadowColor = "#00ff41"
           wallCtx.shadowBlur = 3
         }
-        
+
         wallCtx.fillText(char, x, y)
       }
     }
@@ -345,7 +480,7 @@ function createRealisticRoom() {
     roughness: 0.9,
     metalness: 0.1,
   })
-  
+
   const frontWall = new THREE.Mesh(wallGeometry, frontWallMaterial)
   frontWall.position.set(0, 7.5, 15)
   frontWall.rotation.y = Math.PI // Face inward
@@ -374,7 +509,7 @@ function createRealisticRoom() {
     roughness: 0.9,
     metalness: 0.1,
   })
-  
+
   const ceiling = new THREE.Mesh(floorGeometry, ceilingMaterial)
   ceiling.position.y = 15
   ceiling.rotation.x = Math.PI / 2
@@ -1190,36 +1325,36 @@ function createAIAssistant() {
 
 function createMatrixRain() {
   const matrixGroup = new THREE.Group()
-  
+
   // Create Matrix-style falling 0s and 1s with reduced intensity
   const characters = ["0", "1"]
   const columns = 15 // Reduced from 30
-  const rows = 12    // Reduced from 20
-  
+  const rows = 12 // Reduced from 20
+
   for (let col = 0; col < columns; col++) {
     for (let row = 0; row < rows; row++) {
       const canvas = document.createElement("canvas")
       canvas.width = 32
       canvas.height = 32
       const ctx = canvas.getContext("2d")
-      
+
       // Random character
       const char = characters[Math.floor(Math.random() * characters.length)]
-      
+
       // Transparent background (no black box)
       ctx.clearRect(0, 0, 32, 32)
-      
+
       // Green matrix style with glow effect
       ctx.fillStyle = "#00ff41"
       ctx.font = "bold 18px monospace"
       ctx.textAlign = "center"
       ctx.textBaseline = "middle"
-      
+
       // Add subtle glow
       ctx.shadowColor = "#00ff41"
       ctx.shadowBlur = 8
       ctx.fillText(char, 16, 16)
-      
+
       const texture = new THREE.CanvasTexture(canvas)
       const material = new THREE.MeshBasicMaterial({
         map: texture,
@@ -1227,18 +1362,18 @@ function createMatrixRain() {
         opacity: 0.4, // Reduced opacity
         blending: THREE.AdditiveBlending, // Makes it glow nicely
       })
-      
+
       const geometry = new THREE.PlaneGeometry(0.25, 0.25) // Slightly smaller
       const charPlane = new THREE.Mesh(geometry, material)
-      
+
       charPlane.position.set(
         (col - columns / 2) * 0.6, // More spread out
         15 - row * 0.6,
-        (Math.random() - 0.5) * 25 // Less depth variation
+        (Math.random() - 0.5) * 25, // Less depth variation
       )
-      
+
       matrixGroup.add(charPlane)
-      
+
       // Slower falling animation with more variation
       gsap.to(charPlane.position, {
         y: -8,
@@ -1250,7 +1385,7 @@ function createMatrixRain() {
           charPlane.position.y = 15
         },
       })
-      
+
       // Gentler opacity flicker
       gsap.to(material, {
         opacity: 0.1 + Math.random() * 0.3, // Subtler opacity range
@@ -1261,7 +1396,7 @@ function createMatrixRain() {
       })
     }
   }
-  
+
   scene.add(matrixGroup)
   matrixRain = matrixGroup
 }
@@ -1937,24 +2072,12 @@ function animateSkillsToUser() {
 function showProjectNavigation() {
   const navDiv = document.createElement("div")
   navDiv.id = "project-nav"
-  navDiv.style.cssText = `
-    position: fixed;
-    bottom: 100px;
-    left: 50%;
-    transform: translateX(-50%);
-    z-index: 20;
-    display: flex;
-    gap: 20px;
-    background: rgba(0,0,0,0.8);
-    padding: 15px;
-    border-radius: 10px;
-    border: 1px solid rgba(0,255,255,0.3);
-  `
+  navDiv.className = "nav-overlay"
 
   navDiv.innerHTML = `
-    <button onclick="scrollProjects(-1)" style="background: rgba(0,255,255,0.2); border: 1px solid #00ffff; color: #00ffff; padding: 10px 15px; border-radius: 5px; cursor: pointer;">← Previous</button>
-    <button onclick="resetProjectView()" style="background: rgba(255,0,0,0.2); border: 1px solid #ff4444; color: #ff4444; padding: 10px 15px; border-radius: 5px; cursor: pointer;">✕ Close</button>
-    <button onclick="scrollProjects(1)" style="background: rgba(0,255,255,0.2); border: 1px solid #00ffff; color: #00ffff; padding: 10px 15px; border-radius: 5px; cursor: pointer;">Next →</button>
+    <button class="nav-btn" onclick="scrollProjects(-1)">← Previous</button>
+    <button class="nav-btn close" onclick="resetProjectView()">✕ Close</button>
+    <button class="nav-btn" onclick="scrollProjects(1)">Next →</button>
   `
 
   document.body.appendChild(navDiv)
@@ -1963,24 +2086,12 @@ function showProjectNavigation() {
 function showSkillNavigation() {
   const navDiv = document.createElement("div")
   navDiv.id = "skill-nav"
-  navDiv.style.cssText = `
-    position: fixed;
-    bottom: 100px;
-    left: 50%;
-    transform: translateX(-50%);
-    z-index: 20;
-    display: flex;
-    gap: 20px;
-    background: rgba(0,0,0,0.8);
-    padding: 15px;
-    border-radius: 10px;
-    border: 1px solid rgba(255,107,157,0.3);
-  `
+  navDiv.className = "nav-overlay"
 
   navDiv.innerHTML = `
-    <button onclick="scrollSkills(-1)" style="background: rgba(255,107,157,0.2); border: 1px solid #ff6b9d; color: #ff6b9d; padding: 10px 15px; border-radius: 5px; cursor: pointer;">← Previous</button>
-    <button onclick="resetSkillView()" style="background: rgba(255,0,0,0.2); border: 1px solid #ff4444; color: #ff4444; padding: 10px 15px; border-radius: 5px; cursor: pointer;">✕ Close</button>
-    <button onclick="scrollSkills(1)" style="background: rgba(255,107,157,0.2); border: 1px solid #ff6b9d; color: #ff6b9d; padding: 10px 15px; border-radius: 5px; cursor: pointer;">Next →</button>
+    <button class="nav-btn" onclick="scrollSkills(-1)">← Previous</button>
+    <button class="nav-btn close" onclick="resetSkillView()">✕ Close</button>
+    <button class="nav-btn" onclick="scrollSkills(1)">Next →</button>
   `
 
   document.body.appendChild(navDiv)

@@ -145,6 +145,7 @@
             white-space: nowrap;
             overflow: hidden;
             text-overflow: ellipsis;
+            pointer-events: all;
         }
         
         .control-btn:hover, .control-btn:active {
@@ -184,6 +185,7 @@
             align-items: center;
             justify-content: center;
             touch-action: manipulation;
+            pointer-events: all;
         }
         
         .touch-btn:active {
@@ -217,6 +219,7 @@
             font-size: clamp(10px, 2.5vw, 14px);
             touch-action: manipulation;
             white-space: nowrap;
+            pointer-events: all;
         }
         
         .nav-btn:active {
@@ -319,6 +322,31 @@
             .info-panel {
                 padding: clamp(5px, 1.5vw, 10px);
                 margin-bottom: clamp(5px, 1vw, 8px);
+            }
+        }
+
+        /* Touch feedback */
+        .touch-feedback {
+            position: fixed;
+            pointer-events: none;
+            width: 60px;
+            height: 60px;
+            border: 2px solid rgba(0, 255, 255, 0.8);
+            border-radius: 50%;
+            background: rgba(0, 255, 255, 0.1);
+            transform: translate(-50%, -50%) scale(0);
+            z-index: 1000;
+            animation: touchRipple 0.6s ease-out;
+        }
+
+        @keyframes touchRipple {
+            0% {
+                transform: translate(-50%, -50%) scale(0);
+                opacity: 1;
+            }
+            100% {
+                transform: translate(-50%, -50%) scale(1);
+                opacity: 0;
             }
         }
     </style>
