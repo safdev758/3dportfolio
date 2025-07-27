@@ -252,7 +252,8 @@ function addOrbitControls() {
         const deltaY = touches[0].clientY - touchStartY
 
         targetRotationY += deltaX * touchSensitivity
-        targetRotationX += deltaY * touchSensitivity
+        // Invert Y axis for mobile - multiply deltaY by -1
+        targetRotationX += deltaY * -1 * touchSensitivity
 
         targetRotationX = Math.max(-Math.PI / 3, Math.min(Math.PI / 3, targetRotationX))
 
